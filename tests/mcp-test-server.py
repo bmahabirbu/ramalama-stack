@@ -1,17 +1,28 @@
 from fastmcp import FastMCP
-import random
+import subprocess
 
-mcp = FastMCP("random_number")
+mcp = FastMCP("terminal_runner")
 
 
-@mcp.tool(description="returns a random number")
-def random_number(session_id: str) -> int:
-    number = random.randint(1, 100)
-    return number
+@mcp.tool(description="Run a shell command and return the output")
+def run_command(command: str) -> str:
+    try:
+        # Run the command, capture stdout and stderr
+        result = subprocess.run(
+            command,
+            shell=True,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        return result.stdout.strip() or "Command executed successfully."
+    except subprocess.CalledProcessError as e:
+        return f"Error ({e.returncode}): {e.stderr.strip()}"
 
 
 if __name__ == "__main__":
-   mcp.run(transport="sse", host="127.0.0.1", port=8000)
+    mcp.run(transport="sse", host="127.0.0.1", port=8000)
+
 
 
 ## start mcp service

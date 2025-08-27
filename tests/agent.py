@@ -17,7 +17,7 @@ async def main():
         model = OpenAIChatCompletionsModel(
             model="llama3.2",
             openai_client=AsyncOpenAI(
-                base_url="http://localhost:8080/v1",
+                base_url="http://localhost:8087/v1",
                 api_key=""
             )
         )
@@ -37,7 +37,7 @@ async def main():
             print("-", tool.name)
 
         # Run the Agent
-        result = await Runner.run(agent, "Give me a random number!", max_turns=10)
+        result = await Runner.run(agent, "Execute cat agent.py", max_turns=100)
         print("Agent output:", result.final_output)
 
 asyncio.run(main())
