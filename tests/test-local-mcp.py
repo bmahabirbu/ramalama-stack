@@ -1,5 +1,10 @@
 import logging
-from llama_stack_client import Agent, AgentEventLogger, LlamaStackClient
+from llama_stack_client import LlamaStackClient
+from llama_stack_client.lib.agents.agent import Agent
+from llama_stack_client.lib.agents.event_logger import EventLogger
+from llama_stack_client.types import UserMessage
+from typing import cast, Iterator
+import os
 import json
 
 # ---------------------------
@@ -10,7 +15,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-INFERENCE_MODEL = "llama3.2"
+INFERENCE_MODEL = os.getenv("INFERENCE_MODEL", "qwen2.5")
 LLAMA_STACK_PORT = 8321
 
 # ---------------------------
@@ -36,7 +41,7 @@ for toolgroup in client.toolgroups.list():
 # Register your test MCP server
 # ---------------------------
 client.toolgroups.register(
-    toolgroup_id="mcp::demo",
+    toolgroup_id="mcp::random_number",
     provider_id="model-context-protocol",
     mcp_endpoint={"uri": "http://localhost:8000/sse"},
 )
@@ -54,10 +59,10 @@ for agent_info in client.agents.list().data:
 agent = Agent(
     client=client,
     model=INFERENCE_MODEL,
-    instructions="You are a helpful assistant with access to MCP tools.",
+    instructions="You are a helpful assistant",
     enable_session_persistence=False,
-    tools=["mcp::demo"],  # just the toolgroup identifier
-    sampling_params={"max_tokens": 2048},
+    tools=["mcp::random_number"],
+    sampling_params={"max_tokens": 2048}
 )
 print("\nCurrent Agent ID: ", agent.agent_id)
 
@@ -70,14 +75,19 @@ print("\nStarted Agent Session: ", session_id)
 # ---------------------------
 # Run a test turn
 # ---------------------------
-turn_response = agent.create_turn(
-    session_id=session_id,
-    messages=[{"role": "user", "content": "Call the greet tool with name Brian"}],
-    stream=True,
-)
+while True:
+    prompt = input("Enter a prompt: ")
+    if not prompt:
+        break
+    turn_response = agent.create_turn(
+        messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+        session_id=session_id,
+    )
 
-# ---------------------------
-# Print streamed output
-# ---------------------------
-for log in AgentEventLogger().log(turn_response):
-    log.print()
+    for log in EventLogger().log(turn_response):
+        log.print()

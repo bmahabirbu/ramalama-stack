@@ -1,16 +1,20 @@
 from fastmcp import FastMCP
+import random
 
-mcp = FastMCP("demo")
+mcp = FastMCP("random_number")
 
 
-@mcp.tool(description="Greets a person by name")
-def greet(name: str, session_id: str | None = None) -> str:
-    return f"Hello, {name}!"
+@mcp.tool(description="returns a random number")
+def random_number(session_id: str) -> int:
+    number = random.randint(1, 100)
+    return number
+
 
 if __name__ == "__main__":
-    mcp.run()
+   mcp.run(transport="sse", host="127.0.0.1", port=8000)
 
 
 ## start mcp service
 
-# uv run npx -y supergateway --port 8000 --stdio 'python mcp-test-server.py'
+# uv run python mcp-test-server.py
+
